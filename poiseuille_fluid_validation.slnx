@@ -1,7 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Project Path="poiseuille_fluid_validation.vcxproj" Id="cbb64982-8e14-418d-a08d-a75de458d3cf" />
-</Solution>
