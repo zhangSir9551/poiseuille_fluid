@@ -1,0 +1,23 @@
+# Visual Studio 临时文件和目录
+.vs/
+x64/
+Debug/
+Release/
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.user
+*.suo
+*.sln.docstates
+*.tlog
+*.idb
+*.lastbuildstate
+*.log
+*.ipch
+.vs/
+
+# 数据与工程产物
+*.csv
+*.opju
+*.jpg
