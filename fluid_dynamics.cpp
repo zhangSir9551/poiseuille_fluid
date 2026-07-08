@@ -72,7 +72,7 @@ namespace ablation
 
     void FluidDynamics::applyWallBoundaryNEE(LBMSolverState& state)
     {
-#pragma omp parallel for collapse(3) schedule(static)
+        #pragma omp parallel for collapse(3) schedule(static)
         for (int z = 0; z < state.nz; ++z)
         {
             for (int y = 0; y < state.ny; ++y)
