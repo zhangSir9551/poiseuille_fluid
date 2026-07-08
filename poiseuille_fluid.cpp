@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <cmath>
+#include <chrono>
 
 #include "solver_state.h"
 #include "fluid_dynamics.h"
@@ -51,8 +52,8 @@ void exportVerificationCSV(const LBMSolverState& state, const std::string& filen
     int x = state.nx / 2;
     int z = state.nz / 2; 
 
-    double a = (state.ny - 2.0) / 2.0; 
-    double b = (state.nz - 2.0) / 2.0; 
+    double a = 10.0;
+    double b = 10.0;
 
     double nu = KINEMATIC_VISCOSITY;   
     double dp_dx = (0.335 - 0.333) / (state.nx - 1.0);
@@ -66,7 +67,11 @@ void exportVerificationCSV(const LBMSolverState& state, const std::string& filen
         double y_coord = y - center_y;
         double z_coord = z - center_z;
 
-        double u_out = (state.node_type[idx] == SOLID_BOUNDARY) ? 0.0 : state.ux[idx];
+        double u_out = 0.0;
+        if (state.node_type[idx] != SOLID_BOUNDARY)
+        {
+            u_out = state.ux[idx] / state.rho[idx]; // 动量除以密度得到真实速度
+        }
         double u_analytical = analyticalPoiseuilleVelocity(y_coord, z_coord, a, b, nu, dp_dx);
 
         if (state.node_type[idx] == SOLID_BOUNDARY)
@@ -111,19 +116,29 @@ int main()
     // 3. 初始化流场平衡态
     FluidDynamics::initFluid(state);
 
-    // 4. 运行模拟至稳态
     int max_steps = 10000;
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    // 4. 开启演化循环
     for (int step = 1; step <= max_steps; ++step)
     {
+        // 依次执行：压力边界 -> 固壁 NEE 外推边界 -> 核心碰撞迁移
+        FluidDynamics::applyPressureBoundary(state);
+        FluidDynamics::applyWallBoundaryNEE(state);
         FluidDynamics::stepFluid(state);
-
-        std::swap(state.f, state.f_post);
 
         if (step % 1000 == 0)
         {
-            std::cout << "Step: " << step << " / " << max_steps << std::endl;
+            std::cout << "Step: " << step << " completed." << std::endl;
         }
     }
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end_time - start_time;
+
+    std::cout << "Simulation Finished in " << diff.count() << " seconds!\n";
+    std::cout << "Average speed: " << (max_steps * (40 * 21 * 21) / diff.count() / 1e6) << " MLUPS (Million Lattice Updates Per Second)\n";
 
     exportVerificationCSV(state, "poiseuille_verification.csv");
 

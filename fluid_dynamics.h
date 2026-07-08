@@ -14,20 +14,19 @@ namespace ablation
     public:
         static void stepFluid(LBMSolverState& state);
         static void applyPressureBoundary(LBMSolverState& state);
+        static void applyWallBoundaryNEE(LBMSolverState& state);
 
         static void initFluid(LBMSolverState& state)
         {
             for (int idx = 0; idx < state.num_nodes; ++idx)
             {
-                if (state.node_type[idx] == FLUID || state.node_type[idx] == INTERPHASE_NODE)
+                // 无差别初始化所有节点，消除奇异初始值
+                double feq[19];
+                computeMrtFeq19(1.0, 0.0, 0.0, 0.0, feq);
+                for (int i = 0; i < Q19; ++i)
                 {
-                    double feq[19];
-                    computeMrtFeq19(1.0, 0.0, 0.0, 0.0, feq);
-                    for (int i = 0; i < Q19; ++i)
-                    {
-                        state.f[i * state.num_nodes + idx] = feq[i];
-                        state.f_post[i * state.num_nodes + idx] = feq[i];
-                    }
+                    state.f[static_cast<size_t>(idx) * 19 + i] = feq[i];
+                    state.f_post[static_cast<size_t>(idx) * 19 + i] = feq[i];
                 }
             }
         }
@@ -65,25 +64,25 @@ namespace ablation
 
             // 逆矩阵 M^-1 投影回离散速度空间
             double s_m[19];
-            s_m[0] = m[0] / 19.0;
-            s_m[1] = m[1] / 2394.0;
-            s_m[2] = m[2] / 252.0;
-            s_m[3] = m[3] / 10.0;
-            s_m[4] = m[4] / 40.0;
-            s_m[5] = m[5] / 10.0;
-            s_m[6] = m[6] / 40.0;
-            s_m[7] = m[7] / 10.0;
-            s_m[8] = m[8] / 40.0;
-            s_m[9] = m[9] / 36.0;
-            s_m[10] = m[10] / 72.0;
-            s_m[11] = m[11] / 12.0;
-            s_m[12] = m[12] / 24.0;
-            s_m[13] = m[13] / 4.0;
-            s_m[14] = m[14] / 4.0;
-            s_m[15] = m[15] / 4.0;
-            s_m[16] = m[16] / 8.0;
-            s_m[17] = m[17] / 8.0;
-            s_m[18] = m[18] / 8.0;
+            s_m[0] = m[0] * (1.0 / 19.0);
+            s_m[1] = m[1] * (1.0 / 2394.0);
+            s_m[2] = m[2] * (1.0 / 252.0);
+            s_m[3] = m[3] * (1.0 / 10.0);
+            s_m[4] = m[4] * (1.0 / 40.0);
+            s_m[5] = m[5] * (1.0 / 10.0);
+            s_m[6] = m[6] * (1.0 / 40.0);
+            s_m[7] = m[7] * (1.0 / 10.0);
+            s_m[8] = m[8] * (1.0 / 40.0);
+            s_m[9] = m[9] * (1.0 / 36.0);
+            s_m[10] = m[10] * (1.0 / 72.0);
+            s_m[11] = m[11] * (1.0 / 12.0);
+            s_m[12] = m[12] * (1.0 / 24.0);
+            s_m[13] = m[13] * (1.0 / 4.0);
+            s_m[14] = m[14] * (1.0 / 4.0);
+            s_m[15] = m[15] * (1.0 / 4.0);
+            s_m[16] = m[16] * (1.0 / 8.0);
+            s_m[17] = m[17] * (1.0 / 8.0);
+            s_m[18] = m[18] * (1.0 / 8.0);
 
             f_eq[0] = s_m[0] - 30.0 * s_m[1] + 12.0 * s_m[2];
             f_eq[1] = s_m[0] - 11.0 * s_m[1] - 4.0 * s_m[2] + s_m[3] - 4.0 * s_m[4] + 2.0 * s_m[9] - 4.0 * s_m[10];
